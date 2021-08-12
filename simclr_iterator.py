@@ -87,17 +87,3 @@ def build_input_fn(builder: tfds.core.DatasetBuilder,
     return dataset
 
   return _input_fn
-
-# %% Testing
-dataset_builder = tfds.builder("cifar10")
-mini_batch_size = 128
-is_training = True
-split = 'train'
-input_fn = build_input_fn(dataset_builder, mini_batch_size, is_training, split = split)
-
-batch = next(iter(input_fn()))
-view_a, view_b = batch
-
-
-
-# %%
