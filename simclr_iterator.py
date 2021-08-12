@@ -5,8 +5,6 @@ import tensorflow.compat.v2 as tf
 import tensorflow_datasets as tfds
 import functools
 
-# %% 
-
 from absl import flags
 
 FLAGS = flags.FLAGS
@@ -37,10 +35,11 @@ def get_preprocess_fn(is_training, image_size, is_pretrain):
 
 
 def build_input_fn(builder: tfds.core.DatasetBuilder, 
-                   mini_batch_size: int, train_mode: str = 'pretrain', 
+                   batch_size: int, 
+                   train_mode: str = 'pretrain', 
                    is_training: bool = True,  
                    split: str = 'train',
-                   cache_dataset: bool = False, image_size: int = 32):
+                   cache_dataset: bool = True, image_size: int = 32):
 
   def _input_fn(input_context = None):
     """Inner input function."""
@@ -79,21 +78,26 @@ def build_input_fn(builder: tfds.core.DatasetBuilder,
       options.experimental_slack = True
       dataset = dataset.with_options(options)
       buffer_multiplier = 50 if image_size <= 32 else 10
-      dataset = dataset.shuffle(mini_batch_size * buffer_multiplier)
+      dataset = dataset.shuffle(batch_size * buffer_multiplier)
       dataset = dataset.repeat(-1)
     dataset = dataset.map(
         map_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset = dataset.batch(mini_batch_size, drop_remainder=is_training)
+    dataset = dataset.batch(batch_size, drop_remainder=is_training)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
     return dataset
 
   return _input_fn
 
-# %%
+# %% Testing
 dataset_builder = tfds.builder("cifar10")
-mini_batch_size = 1024
+mini_batch_size = 128
 is_training = True
 split = 'train'
 input_fn = build_input_fn(dataset_builder, mini_batch_size, is_training, split = split)
 
-print(input_fn(None))
+batch = next(iter(input_fn()))
+view_a, view_b = batch
+
+
+
+# %%
